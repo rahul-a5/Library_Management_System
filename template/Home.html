@@ -13,8 +13,13 @@
 <body>
 <div class='myDiv'>
     <h2> Welcome to Homepage</h2>
-    <form class="example" action="action_page.php">
-    <input type="text" placeholder="Search Books" name="search">
+    <form class="example" action="get_books" method="post">
+    <label for="by">Search By:</label>
+    <select id="by" name="type">
+    <option value="A">Author name</option>
+    <option value="B">Book name</option>
+  </select>
+    <input type="text" placeholder="Search Books" name="name" required>
     <button type="submit"> Submit </button>
     </form>
     <a href="signup"> Sign up </a>

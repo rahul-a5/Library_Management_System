@@ -12,6 +12,7 @@ const {
 } =process.env
 
 var app = express();
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 var connection = mysql.createConnection({
@@ -38,20 +39,39 @@ app.use(session({
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
 
+const redirectlogin =(req,res,next)=>{
+    if(req.session.user){
+        next();
+    }
+    else{
+        res.redirect('/login');
+    }
+}
+
+const redirectprofile =(req,res,next)=>{
+    if(!req.session.user){
+        next();
+    }
+    else{
+        res.redirect('/profile');
+    }
+}
+
+
 app.get('/',function(req,res){
     res.sendFile(path.join(__dirname+'/template/Home.html'));
 });
 
-app.get('/signup',function(req,res){
+app.get('/signup', redirectprofile,function(req,res){
     res.sendFile(path.join(__dirname+'/template/Signup.html'));
 });
 
-app.get('/login',function(req,res){
+app.get('/login',redirectprofile,function(req,res){
     res.sendFile(path.join(__dirname+'/template/Login.html'));
 });
 
 
-app.post('/signup',function(req,res){
+app.post('/signup',redirectprofile,function(req,res){
 	const em=req.body.email;
 	const ps=req.body.pass;
 	const reps=req.body.repass;
@@ -63,28 +83,37 @@ app.post('/signup',function(req,res){
 		else{
 			connection.query('Insert into staff(email,password,admin) values(?,?,1)',[em,ps],function(err1,dbres1,fields1){
 			});
-			res.redirect('/login');
-			return;
+
+			res.send('<script>alert("Signup Successfull")</script>');
+			
+			
 		}
 	});
 });
 
-app.post('/login',function(req,res){
+app.get('/profile',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/profile.html'));
+});
+
+app.get('/add_books',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/add_books.html'));
+});
+
+app.post('/login',redirectprofile,function(req,res){
 	const em=req.body.email;
 	const ps=req.body.pass;
 	connection.query('Select * from staff where email=? and password=?',[em,ps],function(err,dbres,fields){
 		if(dbres.length==1){
-
+			req.session.user=dbres[0].email;
+			res.redirect('/profile');
+		}
+		else{
+			res.redirect('/login');
 		}
 	});
-    res.sendFile(path.join(__dirname+'/template/Login.html'));
 });
 
-app.get('/page',function(req,res){
-	res.sendFile(path.join(__dirname+'/template/page.html'));
-});
-
-app.post('/register_book',function(req,res){
+app.post('/add_books',redirectlogin, function(req,res){
 
 	const Book_id=req.body.b_id;
 	const book=req.body.b_name;
@@ -105,8 +134,58 @@ app.post('/register_book',function(req,res){
 			});
 		}
 	});
-	res.redirect('/page'); 
+	res.redirect('/add_books');
 });
 
+
+app.post('/get_books',function(req,res){
+	var str=req.body.name;
+	console.log(str);
+	var lstr=str.toLowerCase();
+	lstr='%'+lstr;
+	lstr+='%';
+	console.log(lstr);
+	if(req.body.type=='B'){
+	connection.query("Select bname , aname, published_year from Books where lower(bname) like ? ",[lstr],function(err,dbres,fields){
+		if(err){
+			res.redirect('/');
+		}
+		console.log(dbres.length);
+		res.render('book_list',{data:dbres});
+		
+	});}
+	else{
+		connection.query("Select bname , aname, published_year from Books where lower(aname) like ? ",[lstr],function(err,dbres,fields){
+			if(err){
+				res.redirect('/');
+			}
+			console.log(dbres.length);
+			res.render('book_list',{data:dbres});
+			
+		});	
+	}
+	
+});
+
+app.get('/add_students',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/add_students.html'));
+});
+
+app.post('/add_students', redirectlogin, function(req,res){
+	
+});
+
+app.get('/add_staffs',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/add_staffs.html'));
+});
+
+app.post('/add_staffs',redirectlogin, function(req,res){
+
+});
+
+app.get('/logout', redirectlogin, function(req,res){
+	req.session.destroy();
+	res.redirect('/');
+});
 
 app.listen(3000);
