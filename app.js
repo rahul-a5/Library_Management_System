@@ -8,7 +8,7 @@ const { request } = require('https');
 const {
     sess_name='sid',
     sess_secret='rahulanand',
-    sess_life=3600*1000
+    sess_life=3600*1000*100
 } =process.env
 
 var app = express();
@@ -35,11 +35,10 @@ app.use(session({
         secure:false
     }
 }));
-
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
-
 const redirectlogin =(req,res,next)=>{
+	//console.log(req.session.user);
     if(req.session.user){
         next();
     }
@@ -72,23 +71,27 @@ app.get('/login',redirectprofile,function(req,res){
 
 
 app.post('/signup',redirectprofile,function(req,res){
+	const nm=req.body.Name;
+	const id=req.body.id;
 	const em=req.body.email;
 	const ps=req.body.pass;
 	const reps=req.body.repass;
+	if(reps==ps){
 	connection.query('Select * from staff where email=?',[em],function(err,dbres,fields){
-		if(err || dbres.length || ps!=reps){
-			res.redirect('/signup');
+		if(err || dbres.length){
+			res.send("<script language='javascript'>window.alert('Email already exists.');window.location='/signup';</script>");
 			return;
 		}
 		else{
-			connection.query('Insert into staff(email,password,admin) values(?,?,1)',[em,ps],function(err1,dbres1,fields1){
+			connection.query('Insert into staff(name,Id,email,password,admin) values(?,?,?,?,1)',[nm ,id ,em ,ps],function(err1,dbres1,fields1){
 			});
-
-			res.send('<script>alert("Signup Successfull")</script>');
-			
-			
+			res.send("<script language='javascript'>window.alert('Signup Successfull');window.location='/login';</script>");
 		}
-	});
+	});}
+	else{
+		//console.log("fail");
+		res.send("<script language='javascript'>window.alert('Both passwords are not same');window.location='/signup';</script>");
+	}
 });
 
 app.get('/profile',redirectlogin, function(req,res){
@@ -106,9 +109,10 @@ app.post('/login',redirectprofile,function(req,res){
 		if(dbres.length==1){
 			req.session.user=dbres[0].email;
 			res.redirect('/profile');
+			
 		}
 		else{
-			res.redirect('/login');
+			res.send("<script language='javascript'>window.alert('Email and Password not match');window.location='/login';</script>");
 		}
 	});
 });
@@ -121,8 +125,15 @@ app.post('/add_books',redirectlogin, function(req,res){
 	const year=Number(req.body.publ_year);
 	var Quantity=Number(req.body.quantity);
 	var remaining=0;
+	if(Quantity<=0){
+		res.send("<script language='javascript'>window.alert('Quantity should be positive');window.location='/add_books';</script>");
+		return;
+	}
 	connection.query('select * from Books where bid=?',[Book_id],function(err,dbres,fields){
-		if(dbres.length==1){
+		if(err){
+			res.send("<script language='javascript'>window.alert('Error');window.location='/add_books';</script>");
+		}
+		else if(dbres.length==1){
 			remaining=dbres[0]['remaining'];
 			Quantity=Quantity+dbres[0]['total_no'];
 				connection.query('delete from Books where bid=?',[Book_id],function(err2,dbres2,fields2){
@@ -134,7 +145,7 @@ app.post('/add_books',redirectlogin, function(req,res){
 			});
 		}
 	});
-	res.redirect('/add_books');
+	res.send("<script language='javascript'>window.alert('Successfully registered');window.location='/add_books';</script>");
 });
 
 
@@ -172,6 +183,26 @@ app.get('/add_students',redirectlogin, function(req,res){
 });
 
 app.post('/add_students', redirectlogin, function(req,res){
+	var name=req.body.s_name;
+	var roll=req.body.r_no;
+	connection.query('Select * from Students where Roll_no=?',[roll],function(err,dbres,fields){
+		if(err){
+			res.send("<script language='javascript'>window.alert('Something error occurred');window.location='/add_students';</script>");
+		}
+		else if(dbres.length!=0){
+			res.send("<script language='javascript'>window.alert('Roll no already exists');window.location='/add_students';</script>");
+		}
+		else{
+			connection.query('Insert into Students(Roll_no,Name) values(?,?)',[roll,name],function(err1,dbres1,fields1){
+				if(err){
+					res.send("<script language='javascript'>window.alert('Something error occurred');window.location='/add_students';</script>");
+				}
+				else{
+					res.send("<script language='javascript'>window.alert('Successfully Registered');window.location='/add_students';</script>");
+				}
+			});
+		}
+	});
 	
 });
 
@@ -180,6 +211,33 @@ app.get('/add_staffs',redirectlogin, function(req,res){
 });
 
 app.post('/add_staffs',redirectlogin, function(req,res){
+	const nm=req.body.Name;
+	const id=req.body.id;
+	const em=req.body.email;
+	const ps=req.body.pass;
+	const reps=req.body.repass;
+	if(reps==ps){
+		connection.query('Select * from staff where email=? or Id',[em,id],function(err,dbres,fields){
+			if(err || dbres.length){
+				if(dbres[0].id==id){
+					res.send("<script language='javascript'>window.alert('Id already exists');window.location='/add_staffs';</script>");
+				}
+				else{
+					res.send("<script language='javascript'>window.alert('Email id already exists');window.location='/add_staffs';</script>");
+				}
+			}
+			else{
+				connection.query('Insert into staff(Name,id,email,password,admin) values(?,?,?,?,0)',[nm ,id ,em ,ps],function(err1,dbres1,fields1){
+				});
+				//console.log('success');
+				res.send("<script language='javascript'>window.alert('Successfully Registered');window.location='/add_staffs';</script>");
+			}
+		});
+	}
+	else{
+		//console.log("fail");
+		res.send("<script language='javascript'>window.alert('Please enter same password in both field');window.location='/add_staffs';</script>");
+	}
 
 });
 
