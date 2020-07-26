@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Login V1</title>
+	<title>Register New Members</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 <!--===============================================================================================-->	
@@ -20,38 +20,102 @@
 	<link rel="stylesheet" type="text/css" href="css/util.css">
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 <!--===============================================================================================-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {
+  font-family: "Lato", sans-serif; background-color: lightblue;
+}
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+</style>
 </head>
 <body>
-	
-	<div class="limiter">
-		<div class="container-login100">
-			<div class="wrap-login100">
-				<div class="login100-pic js-tilt" data-tilt>
-					<img src="images/img-01.png" alt="IMG">
-				</div>
+	<div id="mySidenav" class="sidenav">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <a href="/about">Your Profile</a>
+  <a href="/add_books">Add Books Detail</a>
+  <a href="/add_students">Add Students Detail</a>
+  <a href="/add_staffs">Add Staff Detail</a>
+  <a href="/logout">Logout</a>
+</div>
 
-				<form class="login100-form validate-form"  action="/signup" method="post">
+<h2 style="margin-left:500px">Welcome to Library Home page</h2>
+<span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; Profile</span>
+
+<script>
+function openNav() {
+  document.getElementById("mySidenav").style.width = "250px";
+}
+
+function closeNav() {
+  document.getElementById("mySidenav").style.width = "0";
+}
+</script>
+         <div style="width:800px;  margin-top: 50px;  margin-left: 480px; ">
+        
+				<form class="login100-form validate-form"  action="/add_staffs" method="post" >
 					<span class="login100-form-title">
-						Member Signup
+						New Members
 					</span>
 
 					<div class="wrap-input100 validate-input" >
+						
 						<input class="input100" type="text" name="Name" placeholder="Name" required>
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-address-book" aria-hidden="true"></i>
 						</span>
+						
 					</div>
 
-					<div class="wrap-input100 validate-input" >
-						<input class="input100" type="text" name="id" placeholder="Your Institute Id" required>
+                    <div class="wrap-input100 validate-input" >
+						
+						<input class="input100" type="text" name="id" placeholder="Institute Id of member" required>
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
-							<i class="fa fa-id-badge" aria-hidden="true"></i>
+							<i class="fa fa-id-card" aria-hidden="true"></i>
 						</span>
+						
 					</div>
 
-					<div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
+                    <div class="wrap-input100 validate-input" data-validate = "Valid email is required: ex@abc.xyz">
 						<input class="input100" type="text" name="email" placeholder="Email">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
@@ -69,54 +133,19 @@
 
 
 					<div class="wrap-input100 validate-input" data-validate = "Password is required">
-						<input class="input100" type="password" name="repass" placeholder="Confirm Password">
+						<input class="input100" type="password" name="repass" placeholder="Re-Type Password">
 						<span class="focus-input100"></span>
 						<span class="symbol-input100">
 							<i class="fa fa-lock" aria-hidden="true"></i>
 						</span>
 					</div>
-					
+
 					<div class="container-login100-form-btn">
 						<button class="login100-form-btn">
-							signup
+							Register Member
 						</button>
-					</div>
-
-
-						<a class="txt2" href="/login">
-							Login
-							<i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
-						</a>
-						<a style="padding-left:5em" class="txt2" href="/">
-							Home
-							<i class="fa fa-long-arrow-right m-l-5" aria-hidden="true"></i>
-						</a>
-				
-					
+					</div>	
 				</form>
-			</div>
-		</div>
-	</div>
-	
-	
-
-	
-<!--===============================================================================================-->	
-	<script src="vendor/jquery/jquery-3.2.1.min.js"></script>
-<!--===============================================================================================-->
-	<script src="vendor/bootstrap/js/popper.js"></script>
-	<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
-	<script src="vendor/select2/select2.min.js"></script>
-<!--===============================================================================================-->
-	<script src="vendor/tilt/tilt.jquery.min.js"></script>
-	<script >
-		$('.js-tilt').tilt({
-			scale: 1.1
-		})
-	</script>
-<!--===============================================================================================-->
-	<script src="js/main.js"></script>
-
+        </div>
 </body>
 </html>
