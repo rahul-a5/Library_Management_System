@@ -3,6 +3,8 @@ var express = require('express');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var path = require('path');
+var moment = require('moment');
+
 const { request } = require('https');
 
 const {
@@ -19,7 +21,8 @@ var connection = mysql.createConnection({
 	host     : 'localhost',
 	user     : 'root',
 	password : '',
-	database : 'library'
+	database : 'library',
+	multipleStatements: true
 });
 
 app.use(express.static(path.join(__dirname, '/')));
@@ -98,6 +101,18 @@ app.get('/profile',redirectlogin, function(req,res){
 	res.sendFile(path.join(__dirname+'/template/profile.html'));
 });
 
+app.get('/staff_profile',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/staff_profile.html'));
+});
+
+app.get('/issue_book',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/issue_book.html'));
+});
+
+app.get('/return_book',redirectlogin, function(req,res){
+	res.sendFile(path.join(__dirname+'/template/return_book.html'));
+});
+
 app.get('/add_books',redirectlogin, function(req,res){
 	res.sendFile(path.join(__dirname+'/template/add_books.html'));
 });
@@ -108,7 +123,14 @@ app.post('/login',redirectprofile,function(req,res){
 	connection.query('Select * from staff where email=? and password=?',[em,ps],function(err,dbres,fields){
 		if(dbres.length==1){
 			req.session.user=dbres[0].email;
-			res.redirect('/profile');
+			req.session.admin=dbres[0].admin;
+			req.session.staff=dbres[0].id;
+			if(req.session.admin===1){
+				res.redirect('/profile');
+			}
+			else{
+				res.redirect('/staff_profile');
+			}
 			
 		}
 		else{
@@ -124,7 +146,7 @@ app.post('/add_books',redirectlogin, function(req,res){
 	const author=req.body.a_name;
 	const year=Number(req.body.publ_year);
 	var Quantity=Number(req.body.quantity);
-	var remaining=0;
+	var remaining=Quantity;
 	if(Quantity<=0){
 		res.send("<script language='javascript'>window.alert('Quantity should be positive');window.location='/add_books';</script>");
 		return;
@@ -134,7 +156,7 @@ app.post('/add_books',redirectlogin, function(req,res){
 			res.send("<script language='javascript'>window.alert('Error');window.location='/add_books';</script>");
 		}
 		else if(dbres.length==1){
-			remaining=dbres[0]['remaining'];
+			remaining=remaining+dbres[0]['remaining'];
 			Quantity=Quantity+dbres[0]['total_no'];
 				connection.query('delete from Books where bid=?',[Book_id],function(err2,dbres2,fields2){
 					connection.query('Insert into Books(bid,aname,bname,published_year,total_no,remaining) values(?,?,?,?,?,?)',[Book_id,book,author,year,Quantity,remaining],function(err1,dbres1,fields1){
@@ -161,8 +183,9 @@ app.post('/get_books',function(req,res){
 		if(err){
 			res.redirect('/');
 		}
+		else{
 		console.log(dbres.length);
-		res.render('book_list',{data:dbres});
+		res.render('book_list',{data:dbres});}
 		
 	});}
 	else{
@@ -241,9 +264,46 @@ app.post('/add_staffs',redirectlogin, function(req,res){
 
 });
 
+
+app.post('/issue_book',function(req,res){
+	var bid=req.body.b_id;
+	var sid=req.body.s_id;
+	connection.query('Select * from Books where bid=?',[bid],function(err,dbres,fields){
+		if(dbres.length==0){
+			res.send("<script language='javascript'>window.alert('Please enter valid Book id');window.location='/issue_book';</script>");
+		}
+		else if(dbres[0]['remaining']==0){
+			res.send("<script language='javascript'>window.alert('These book is currently not available');window.location='/issue_book';</script>");
+		}
+		else{
+			connection.query('Select no_of_book_issued as t from Students where Roll_no=?',[sid],function(err1,dbres1,fields1){
+				if(dbres1.length==0){
+					res.send("<script language='javascript'>window.alert('Please enter valid Student roll no');window.location='/issue_book';</script>");
+				}
+				else if(dbres1[0]['t']>2){
+					res.send("<script language='javascript'>window.alert('Sorry, this student have already 3 books.');window.location='/issue_book';</script>");
+				}
+				else{
+					//console.log(req.session.staff);
+					connection.query('insert into issued_books(staff_id,id,Roll_no,issued_date) values(?,?,?,curdate());update Students set no_of_book_issued=no_of_book_issued+1 where Roll_no=?; update Books set remaining=remaining-1 where bid=?;',   [req.session.staff,bid,sid,sid,bid],function(err2,dbres2,fields2){
+						if(err2){
+							//console.log(err2);
+							res.send("<script language='javascript'>window.alert('Error');window.location='/issue_book';</script>");
+						}
+						else{
+							res.send("<script language='javascript'>window.alert('Successfully registered');window.location='/issue_book';</script>");
+						}
+					})
+				}
+			})
+		}
+	});
+});
+
 app.get('/logout', redirectlogin, function(req,res){
 	req.session.destroy();
 	res.redirect('/');
 });
 
 app.listen(3000);
+
